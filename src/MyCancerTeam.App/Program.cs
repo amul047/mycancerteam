@@ -90,8 +90,13 @@ if (response.OpenQuestions.Count > 0)
 }
 
 await noteStore.WriteSharedNotesAsync(updatedNotes.ToString());
+
+var caseSummary = BuildCaseSummary(userInput, response);
+await noteStore.WriteCaseSummaryAsync(caseSummary);
+
 Console.WriteLine();
-Console.WriteLine($"Shared notes updated at: {configuration.LatestSharedNotesPath}");
+Console.WriteLine($"Tracking notes updated at: {configuration.LatestSharedNotesPath}");
+Console.WriteLine($"Case summary regenerated at: {configuration.CaseSummaryPath}");
 
 static string ResolveRepositoryRoot()
 {
@@ -103,6 +108,47 @@ static string Prompt(string prompt)
 {
     Console.Write(prompt);
     return Console.ReadLine() ?? string.Empty;
+}
+
+static string BuildCaseSummary(string userInput, AgentResponse response)
+{
+    var builder = new StringBuilder();
+    builder.AppendLine("# Case Summary");
+    builder.AppendLine();
+    builder.AppendLine($"_Generated: {DateTimeOffset.UtcNow:O}_");
+    builder.AppendLine();
+    builder.AppendLine("> Final synthesized snapshot of the case. Regenerated every run.");
+    builder.AppendLine("> Tracking history lives in `notes/notes.md`.");
+    builder.AppendLine();
+    builder.AppendLine("## Latest Input");
+    builder.AppendLine(string.IsNullOrWhiteSpace(userInput) ? "_(none)_" : userInput);
+    builder.AppendLine();
+    builder.AppendLine("## Team Lead Synthesis");
+    builder.AppendLine(string.IsNullOrWhiteSpace(response.Summary) ? "_(no synthesis available)_" : response.Summary);
+    builder.AppendLine();
+    builder.AppendLine($"**Confidence:** {response.ConfidenceLevel:P0}");
+
+    if (response.SuggestedClinicianQuestions.Count > 0)
+    {
+        builder.AppendLine();
+        builder.AppendLine("## Suggested Clinician Questions");
+        foreach (var question in response.SuggestedClinicianQuestions)
+        {
+            builder.AppendLine($"- {question}");
+        }
+    }
+
+    if (response.OpenQuestions.Count > 0)
+    {
+        builder.AppendLine();
+        builder.AppendLine("## Open Questions");
+        foreach (var openQuestion in response.OpenQuestions)
+        {
+            builder.AppendLine($"- {openQuestion}");
+        }
+    }
+
+    return builder.ToString();
 }
 
 static WorkflowType InferWorkflowType(string input)

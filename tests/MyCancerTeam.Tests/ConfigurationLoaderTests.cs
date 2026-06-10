@@ -33,7 +33,23 @@ public sealed class ConfigurationLoaderTests
             Assert.Equal("https://from-config.openai.azure.com/", config.AzureOpenAiEndpoint);
             Assert.Equal("env-deployment", config.AzureOpenAiDeployment);
             Assert.True(Path.IsPathRooted(config.LocalWorkingFolderPath));
+
             Assert.EndsWith(Path.Combine(".local", "notes", "notes.md"), config.LatestSharedNotesPath);
+            Assert.EndsWith(Path.Combine(".local", "case-summary.md"), config.CaseSummaryPath);
+
+            Assert.EndsWith(Path.Combine(".local", "clinical-notes"), config.ClinicalNotesFolderPath);
+            Assert.EndsWith(Path.Combine(".local", "clinical-notes", "imaging"), config.ClinicalImagingFolderPath);
+            Assert.EndsWith(Path.Combine(".local", "clinical-notes", "reports"), config.ClinicalReportsFolderPath);
+            Assert.EndsWith(Path.Combine(".local", "clinical-notes", "plans"), config.ClinicalPlansFolderPath);
+
+            Assert.EndsWith(Path.Combine(".local", "non-clinical"), config.NonClinicalFolderPath);
+            Assert.EndsWith(Path.Combine(".local", "non-clinical", "insurance"), config.NonClinicalInsuranceFolderPath);
+
+            Assert.EndsWith(Path.Combine(".local", "research"), config.ResearchFolderPath);
+            Assert.EndsWith(Path.Combine(".local", "research", "cache"), config.ResearchCacheFolderPath);
+            Assert.EndsWith(Path.Combine(".local", "research", "summaries"), config.ResearchSummariesFolderPath);
+            Assert.EndsWith(Path.Combine(".local", "research", "global-treatment-search"), config.ResearchGlobalTreatmentSearchFolderPath);
+            Assert.EndsWith(Path.Combine(".local", "research", "international-second-opinions"), config.ResearchInternationalSecondOpinionsFolderPath);
         }
         finally
         {

@@ -54,20 +54,14 @@ nunit-*.xml
 .local/
 **/.local/
 **/clinical-notes/
-**/reports/
-**/imaging/
-**/scan*/
-**/radiation-plans/
-**/medication-plans/
-**/insurance-documents/
+**/non-clinical/
 **/agent-memory/
-**/research-cache/
-**/research-summaries/
-**/global-treatment-search/
-**/international-second-opinions/
 **/drafts/
 **/iterations/
+case-summary.md
+**/case-summary.md
 
 # Environment-specific configuration secrets
 config/environments/*/secrets.*
 config/environments/*/*.local.json
+.vs/

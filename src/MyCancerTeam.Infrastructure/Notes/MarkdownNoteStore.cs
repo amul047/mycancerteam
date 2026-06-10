@@ -42,4 +42,16 @@ public sealed class MarkdownNoteStore : INoteStore
         var path = Path.Combine(_configuration.AgentMemoryFolderPath, safeFileName);
         await File.WriteAllTextAsync(path, content, cancellationToken);
     }
+
+    public async Task WriteCaseSummaryAsync(string content, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(_configuration.CaseSummaryPath))
+        {
+            throw new InvalidOperationException("CaseSummaryPath is not configured.");
+        }
+
+        var folder = Path.GetDirectoryName(_configuration.CaseSummaryPath) ?? _configuration.LocalWorkingFolderPath;
+        Directory.CreateDirectory(folder);
+        await File.WriteAllTextAsync(_configuration.CaseSummaryPath, content, cancellationToken);
+    }
 }

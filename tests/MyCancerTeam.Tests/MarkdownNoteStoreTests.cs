@@ -15,7 +15,8 @@ public sealed class MarkdownNoteStoreTests
         {
             LocalWorkingFolderPath = root,
             LatestSharedNotesPath = Path.Combine(root, "notes", "notes.md"),
-            AgentMemoryFolderPath = Path.Combine(root, "agent-memory")
+            AgentMemoryFolderPath = Path.Combine(root, "agent-memory"),
+            CaseSummaryPath = Path.Combine(root, "case-summary.md")
         };
 
         try
@@ -27,9 +28,14 @@ public sealed class MarkdownNoteStoreTests
             await store.WriteAgentNotesAsync("research-oncology.md", "agent content");
             var agentPath = Path.Combine(config.AgentMemoryFolderPath, "research-oncology.md");
 
+            await store.WriteCaseSummaryAsync("# Case Summary\n\nfinal snapshot");
+
             Assert.Equal("hello notes", shared);
             Assert.True(File.Exists(agentPath));
             Assert.Equal("agent content", await File.ReadAllTextAsync(agentPath));
+
+            Assert.True(File.Exists(config.CaseSummaryPath));
+            Assert.Equal("# Case Summary\n\nfinal snapshot", await File.ReadAllTextAsync(config.CaseSummaryPath));
         }
         finally
         {

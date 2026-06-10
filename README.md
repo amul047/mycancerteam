@@ -67,42 +67,68 @@ Core vars:
 - `MYCANCERTEAM_AZURE_OPENAI_ENDPOINT`
 - `MYCANCERTEAM_AZURE_OPENAI_DEPLOYMENT`
 - `MYCANCERTEAM_LOCAL_WORKING_FOLDER`
-- `MYCANCERTEAM_ITERATIONS_FOLDER`
+
+Clinical (in-person team source of truth):
 - `MYCANCERTEAM_CLINICAL_NOTES_FOLDER`
-- `MYCANCERTEAM_REPORTS_FOLDER`
-- `MYCANCERTEAM_IMAGING_FOLDER`
-- `MYCANCERTEAM_RADIATION_PLAN_FOLDER`
-- `MYCANCERTEAM_MEDICATION_PLAN_FOLDER`
-- `MYCANCERTEAM_INSURANCE_DOCUMENTS_FOLDER`
+- `MYCANCERTEAM_CLINICAL_IMAGING_FOLDER`
+- `MYCANCERTEAM_CLINICAL_REPORTS_FOLDER`
+- `MYCANCERTEAM_CLINICAL_PLANS_FOLDER`
+
+Non-clinical (administrative / financial):
+- `MYCANCERTEAM_NON_CLINICAL_FOLDER`
+- `MYCANCERTEAM_NON_CLINICAL_INSURANCE_FOLDER`
+
+Research (AI / web-sourced):
+- `MYCANCERTEAM_RESEARCH_FOLDER`
 - `MYCANCERTEAM_RESEARCH_CACHE_FOLDER`
 - `MYCANCERTEAM_RESEARCH_SUMMARIES_FOLDER`
-- `MYCANCERTEAM_GLOBAL_TREATMENT_SEARCH_FOLDER`
-- `MYCANCERTEAM_INTL_SECOND_OPINIONS_FOLDER`
+- `MYCANCERTEAM_RESEARCH_GLOBAL_TREATMENT_SEARCH_FOLDER`
+- `MYCANCERTEAM_RESEARCH_INTL_SECOND_OPINIONS_FOLDER`
+
+Operational:
 - `MYCANCERTEAM_DRAFTS_FOLDER`
 - `MYCANCERTEAM_AGENT_MEMORY_FOLDER`
-- `MYCANCERTEAM_LATEST_SHARED_NOTES_PATH`
-- `MYCANCERTEAM_DAILY_RESEARCH_REFRESH_SCHEDULE` (optional)
+- `MYCANCERTEAM_ITERATIONS_FOLDER`
+
+Outputs:
+- `MYCANCERTEAM_LATEST_SHARED_NOTES_PATH` (running tracking log; appended every run)
+- `MYCANCERTEAM_CASE_SUMMARY_PATH` (final case summary; regenerated every run)
+
+Optional:
+- `MYCANCERTEAM_DAILY_RESEARCH_REFRESH_SCHEDULE`
 
 ## Local folder setup
-The app auto-creates local folders under `.local/` by default:
-- `.local/notes/notes.md`
-- `.local/agent-memory/`
+The app auto-creates local folders under `.local/` by default. The layout has three input groupings plus operational and output files:
+
+Clinical (in-person team source of truth):
 - `.local/clinical-notes/`
-- `.local/imaging/`
-- `.local/radiation-plans/`
-- `.local/medication-plans/`
-- `.local/reports/`
-- `.local/insurance-documents/`
-- `.local/iterations/`
-- `.local/research-cache/`
-- `.local/research-summaries/`
-- `.local/global-treatment-search/`
-- `.local/international-second-opinions/`
+- `.local/clinical-notes/imaging/`
+- `.local/clinical-notes/reports/`
+- `.local/clinical-notes/plans/` (radiation + medication / prescription plans)
+
+Non-clinical (administrative / financial):
+- `.local/non-clinical/`
+- `.local/non-clinical/insurance/`
+
+Research (AI / web-sourced):
+- `.local/research/`
+- `.local/research/cache/`
+- `.local/research/summaries/`
+- `.local/research/global-treatment-search/`
+- `.local/research/international-second-opinions/`
+
+Operational:
 - `.local/drafts/`
 - `.local/drafts/emails/`
 - `.local/drafts/insurance/`
 - `.local/drafts/second-opinions/`
 - `.local/drafts/trials/`
+- `.local/agent-memory/`
+- `.local/iterations/`
+
+Outputs:
+- `.local/notes/notes.md` (tracking log, appended every run)
+- `.local/case-summary.md` (final case summary, regenerated every run)
 
 ## Run commands
 - Build: `dotnet build MyCancerTeam.slnx`
@@ -129,7 +155,7 @@ The app auto-creates local folders under `.local/` by default:
 - **No notes file:** app creates local notes automatically on first write.
 
 ## Local notes and privacy
-`notes.md` and agent memory files are local only and intentionally excluded from git.
+`notes.md` is the running tracking log (appended every run). `case-summary.md` is the final synthesized snapshot (regenerated every run). Both files, plus agent memory, are local-only and intentionally excluded from git.
 Do not store secrets in committed files.
 
 ## Ignored folders/files
