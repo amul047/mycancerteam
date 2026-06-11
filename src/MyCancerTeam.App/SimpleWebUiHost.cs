@@ -63,7 +63,10 @@ public sealed class SimpleWebUiHost
             }
             catch (Exception ex)
             {
-                return Results.Json(new { error = ex.Message }, statusCode: StatusCodes.Status500InternalServerError);
+                app.Logger.LogError(ex, "Failed to process web UI request.");
+                return Results.Json(
+                    new { error = "An error occurred while processing your request." },
+                    statusCode: StatusCodes.Status500InternalServerError);
             }
         });
 

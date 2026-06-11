@@ -134,7 +134,9 @@ public sealed class SessionProcessingService
             return WorkflowType.TravelAndPracticalSupport;
         }
 
-        if (ContainsAnyToken(tokens, "imaging", "scan", "mri", "ct", "pet"))
+        if (ContainsAnyToken(tokens, "imaging", "scan", "mri", "pet")
+            || ContainsPhrase(normalized, "ct scan")
+            || ContainsPhrase(normalized, "cat scan"))
         {
             return WorkflowType.ImagingReview;
         }
