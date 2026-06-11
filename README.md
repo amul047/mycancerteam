@@ -93,7 +93,7 @@ Scanned/image-only PDFs have no embedded text, so nothing can be extracted; thes
 - Run app: `dotnet run --project src/MyCancerTeam.App`
 - Example run with arg: `dotnet run --project src/MyCancerTeam.App -- "Need questions for radiation side effects"`
 - Run simple web UI: `dotnet run --project src/MyCancerTeam.App -- --web`
-- Web UI address: `http://127.0.0.1:5078` (binds locally only)
+- Web UI address: `http://127.0.0.1:5078` (binds locally only on a fixed, predictable URL)
 
 ## Test commands
 - `dotnet test MyCancerTeam.slnx`

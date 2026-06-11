@@ -8,6 +8,9 @@ namespace MyCancerTeam.Core.Sessions;
 
 public sealed class SessionProcessingService
 {
+    private static readonly char[] TokenDelimiters =
+    [' ', '\t', '\r', '\n', '.', ',', ';', ':', '!', '?', '(', ')', '[', ']', '{', '}', '/', '\\', '-', '_', '"', '\''];
+
     private readonly INoteStore _noteStore;
     private readonly ITeamLeadAgent _teamLeadAgent;
     private readonly AppConfiguration _configuration;
@@ -123,9 +126,7 @@ public sealed class SessionProcessingService
     private static WorkflowType InferWorkflowType(string input)
     {
         var normalized = input.ToLowerInvariant();
-        var tokens = normalized.Split(
-            [' ', '\t', '\r', '\n', '.', ',', ';', ':', '!', '?', '(', ')', '[', ']', '{', '}', '/', '\\', '-', '_', '"', '\''],
-            StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        var tokens = normalized.Split(TokenDelimiters, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .ToHashSet(StringComparer.Ordinal);
 
         if (ContainsAnyToken(tokens, "travel", "visa", "transport"))
