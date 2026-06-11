@@ -32,7 +32,7 @@ Cancer care is complex and stressful. This project helps patients/support people
 - Draft support is local markdown generation only; no automatic message sending.
 
 ## Repository layout
-- `src/MyCancerTeam.App` - console host
+- `src/MyCancerTeam.App` - console host plus simple local web UI
 - `src/MyCancerTeam.Core` - agent/workflow abstractions and models
 - `src/MyCancerTeam.Infrastructure` - configuration, note store, drafts, Azure credential/client setup, research refresh scaffolding
 - `tests/MyCancerTeam.Tests` - baseline tests
@@ -92,6 +92,8 @@ Scanned/image-only PDFs have no embedded text, so nothing can be extracted; thes
 - Build: `dotnet build MyCancerTeam.slnx`
 - Run app: `dotnet run --project src/MyCancerTeam.App`
 - Example run with arg: `dotnet run --project src/MyCancerTeam.App -- "Need questions for radiation side effects"`
+- Run simple web UI: `dotnet run --project src/MyCancerTeam.App -- --web`
+- Web UI address: `http://127.0.0.1:5078`
 
 ## Test commands
 - `dotnet test MyCancerTeam.slnx`

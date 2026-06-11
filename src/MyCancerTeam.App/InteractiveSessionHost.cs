@@ -1,10 +1,9 @@
-using System.Text;
 using System.Threading.Channels;
 using MyCancerTeam.Core.Agents;
-using MyCancerTeam.Core.Configuration;
 using MyCancerTeam.Core.Drafts;
 using MyCancerTeam.Core.Notes;
-using MyCancerTeam.Core.Workflows;
+using MyCancerTeam.Core.Sessions;
+using MyCancerTeam.Infrastructure.Notes;
 
 namespace MyCancerTeam.App;
 
@@ -16,27 +15,21 @@ public sealed class InteractiveSessionHost
 {
     private static readonly TimeSpan DefaultPollInterval = TimeSpan.FromSeconds(5);
 
-    private readonly INoteStore _noteStore;
-    private readonly ITeamLeadAgent _teamLeadAgent;
     private readonly IDraftCommunicationService _draftService;
     private readonly IFolderNoteScanner _scanner;
-    private readonly AppConfiguration _configuration;
+    private readonly SessionProcessingService _sessionProcessingService;
     private readonly TimeSpan _pollInterval;
     private readonly object _consoleLock = new();
 
     public InteractiveSessionHost(
-        INoteStore noteStore,
-        ITeamLeadAgent teamLeadAgent,
         IDraftCommunicationService draftService,
         IFolderNoteScanner scanner,
-        AppConfiguration configuration,
+        SessionProcessingService sessionProcessingService,
         TimeSpan? pollInterval = null)
     {
-        _noteStore = noteStore;
-        _teamLeadAgent = teamLeadAgent;
         _draftService = draftService;
         _scanner = scanner;
-        _configuration = configuration;
+        _sessionProcessingService = sessionProcessingService;
         _pollInterval = pollInterval ?? DefaultPollInterval;
     }
 
@@ -192,27 +185,10 @@ public sealed class InteractiveSessionHost
 
     private async Task ProcessAsync(WorkItem item, CancellationToken cancellationToken)
     {
-        var sharedNotes = await _noteStore.ReadSharedNotesAsync(cancellationToken);
-
-        var request = new WorkflowRequest
-        {
-            WorkflowType = InferWorkflowType(item.Input),
-            UserInput = item.Input
-        };
-
-        var response = await _teamLeadAgent.CoordinateAsync(request, sharedNotes, cancellationToken);
-
-        PrintResponse(item, response);
-
-        var updatedNotes = BuildUpdatedNotes(sharedNotes, item, response);
-        await _noteStore.WriteSharedNotesAsync(updatedNotes, cancellationToken);
-
-        Log($"Shared notes updated at: {_configuration.SharedNotesFilePath}");
-
-        var summary = BuildSummary(item, response);
-        await _noteStore.WriteSummaryAsync(summary, cancellationToken);
-
-        Log($"Summary updated at: {_configuration.SummaryFilePath}");
+        var result = await _sessionProcessingService.ProcessAsync(item.Input, item.Source, cancellationToken);
+        PrintResponse(item, result.Response);
+        Log($"Shared notes updated at: {result.SharedNotesPath}");
+        Log($"Summary updated at: {result.SummaryPath}");
     }
 
     private async Task HandleDraftAsync(CancellationToken cancellationToken)
@@ -254,126 +230,6 @@ public sealed class InteractiveSessionHost
                 }
             }
         }
-    }
-
-    private static string BuildSummary(WorkItem item, AgentResponse response)
-    {
-        var summary = new StringBuilder();
-        summary.AppendLine("# MyCancerTeam Summary");
-        summary.AppendLine();
-        summary.AppendLine($"_Last updated: {DateTimeOffset.UtcNow:O}_");
-        summary.AppendLine();
-        summary.AppendLine($"**Source:** {item.Source}");
-        summary.AppendLine($"**Input:** {item.Input}");
-        summary.AppendLine($"**Confidence:** {response.ConfidenceLevel:P0}");
-        summary.AppendLine();
-        summary.AppendLine("## Team Lead Summary");
-        summary.AppendLine(response.Summary);
-
-        if (response.OpenQuestions.Count > 0)
-        {
-            summary.AppendLine();
-            summary.AppendLine("## Open Questions");
-            foreach (var question in response.OpenQuestions)
-            {
-                summary.AppendLine($"- {question}");
-            }
-        }
-
-        if (response.SuggestedClinicianQuestions.Count > 0)
-        {
-            summary.AppendLine();
-            summary.AppendLine("## Suggested Clinician Questions");
-            foreach (var question in response.SuggestedClinicianQuestions)
-            {
-                summary.AppendLine($"- {question}");
-            }
-        }
-
-        return summary.ToString();
-    }
-
-    private static string BuildUpdatedNotes(string sharedNotes, WorkItem item, AgentResponse response)
-    {
-        var updatedNotes = new StringBuilder();
-        if (!string.IsNullOrWhiteSpace(sharedNotes))
-        {
-            updatedNotes.AppendLine(sharedNotes.Trim());
-            updatedNotes.AppendLine();
-        }
-
-        updatedNotes.AppendLine($"## Update {DateTimeOffset.UtcNow:O}");
-        updatedNotes.AppendLine($"Source: {item.Source}");
-        updatedNotes.AppendLine($"User input: {item.Input}");
-        updatedNotes.AppendLine();
-        updatedNotes.AppendLine("### Team Lead Summary");
-        updatedNotes.AppendLine(response.Summary);
-
-        if (response.OpenQuestions.Count > 0)
-        {
-            updatedNotes.AppendLine();
-            updatedNotes.AppendLine("### Open Questions");
-            foreach (var openQuestion in response.OpenQuestions)
-            {
-                updatedNotes.AppendLine($"- {openQuestion}");
-            }
-        }
-
-        return updatedNotes.ToString();
-    }
-
-    private static WorkflowType InferWorkflowType(string input)
-    {
-        var normalized = input.ToLowerInvariant();
-
-        if (normalized.Contains("travel") || normalized.Contains("visa") || normalized.Contains("transport"))
-        {
-            return WorkflowType.TravelAndPracticalSupport;
-        }
-
-        if (normalized.Contains("imaging") || normalized.Contains("scan") || normalized.Contains("mri") || normalized.Contains("ct") || normalized.Contains("pet"))
-        {
-            return WorkflowType.ImagingReview;
-        }
-
-        if (normalized.Contains("radiation") || normalized.Contains("fraction") || normalized.Contains("proton") || normalized.Contains("photon"))
-        {
-            return WorkflowType.RadiationPlanReview;
-        }
-
-        if (normalized.Contains("chemo") || normalized.Contains("medication") || normalized.Contains("systemic"))
-        {
-            return WorkflowType.MedicationPlanReview;
-        }
-
-        if (normalized.Contains("insurance") || normalized.Contains("claim") || normalized.Contains("reimburse"))
-        {
-            return WorkflowType.InsuranceAndFinancial;
-        }
-
-        if (normalized.Contains("trial") || normalized.Contains("research") || normalized.Contains("evidence"))
-        {
-            return WorkflowType.ResearchMonitoring;
-        }
-
-        if (normalized.Contains("international") || normalized.Contains("overseas") || normalized.Contains("second opinion"))
-        {
-            return WorkflowType.GlobalTreatmentAccess;
-        }
-
-        if (normalized.Contains("symptom") || normalized.Contains("nausea") || normalized.Contains("fatigue") || normalized.Contains("pain"))
-        {
-            return WorkflowType.SymptomSupport;
-        }
-
-        if (normalized.Contains("exercise") || normalized.Contains("fitness") || normalized.Contains("physical activity")
-            || normalized.Contains("workout") || normalized.Contains("walking") || normalized.Contains("physio")
-            || normalized.Contains("rehabilitation") || normalized.Contains("rehab"))
-        {
-            return WorkflowType.PhysicalFitness;
-        }
-
-        return WorkflowType.GeneralUpdate;
     }
 
     private static bool IsExitCommand(string input)
