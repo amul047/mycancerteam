@@ -158,7 +158,7 @@ public sealed class SessionProcessingService
             return WorkflowType.ResearchMonitoring;
         }
 
-        if (ContainsAnyToken(tokens, "international", "overseas") || normalized.Contains("second opinion"))
+        if (ContainsAnyToken(tokens, "international", "overseas") || ContainsPhrase(normalized, "second opinion"))
         {
             return WorkflowType.GlobalTreatmentAccess;
         }
@@ -169,7 +169,7 @@ public sealed class SessionProcessingService
         }
 
         if (ContainsAnyToken(tokens, "exercise", "fitness", "workout", "walking", "physio", "rehabilitation", "rehab")
-            || normalized.Contains("physical activity"))
+            || ContainsPhrase(normalized, "physical activity"))
         {
             return WorkflowType.PhysicalFitness;
         }
@@ -179,4 +179,7 @@ public sealed class SessionProcessingService
 
     private static bool ContainsAnyToken(HashSet<string> tokens, params string[] candidates)
         => candidates.Any(tokens.Contains);
+
+    private static bool ContainsPhrase(string normalizedInput, string phrase)
+        => normalizedInput.Contains(phrase, StringComparison.Ordinal);
 }
