@@ -1,5 +1,6 @@
 using MyCancerTeam.App;
 using MyCancerTeam.Core.Agents;
+using MyCancerTeam.Core.Sessions;
 using MyCancerTeam.Core.Workflows;
 using MyCancerTeam.Infrastructure.AI;
 using MyCancerTeam.Infrastructure.Azure;
@@ -37,6 +38,7 @@ registry.Register(new PhysicalFitnessAgent());
 
 var teamLeadAgent = new TeamLeadAgent(registry, new WorkflowRouter());
 registry.Register(teamLeadAgent);
+var sessionProcessingService = new SessionProcessingService(noteStore, teamLeadAgent, configuration);
 
 using var cts = new CancellationTokenSource();
 Console.CancelKeyPress += (_, eventArgs) =>
@@ -45,10 +47,20 @@ Console.CancelKeyPress += (_, eventArgs) =>
     cts.Cancel();
 };
 
-var initialInput = args.Length > 0 ? string.Join(' ', args) : null;
+var webMode = args.Any(static arg => string.Equals(arg, "--web", StringComparison.OrdinalIgnoreCase));
+var remainingArgs = args.Where(static arg => !string.Equals(arg, "--web", StringComparison.OrdinalIgnoreCase)).ToArray();
+var initialInput = remainingArgs.Length > 0 ? string.Join(' ', remainingArgs) : null;
 
-var host = new InteractiveSessionHost(noteStore, teamLeadAgent, draftService, scanner, configuration);
-await host.RunAsync(cts, initialInput);
+if (webMode)
+{
+    var host = new SimpleWebUiHost(sessionProcessingService, scanner, configuration);
+    await host.RunAsync(remainingArgs, cts.Token);
+}
+else
+{
+    var host = new InteractiveSessionHost(draftService, scanner, sessionProcessingService);
+    await host.RunAsync(cts, initialInput);
+}
 
 static string ResolveRepositoryRoot()
 {
